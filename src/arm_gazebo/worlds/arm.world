@@ -8,6 +8,6 @@
             <uri>model://sun</uri>
         </include>
         <plugin name="publisher" filename="libPublisher.so"/>
-        <plugin name="publisher" filename="libSubscriber.so"/>
+        <plugin name="subscriber" filename="libSubscriber.so"/>
     </world>
 </sdf>

@@ -141,7 +141,5 @@
                 </geometry>
             </visual>
         </link>
-        <plugin name="publisher" filename="libPublisher.so"/>
-        <plugin name="publisher" filename="libSubscriber.so"/>
     </model>
 </sdf>
