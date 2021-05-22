@@ -8,7 +8,9 @@
 
 void PrintJointStates(const sensor_msgs::JointState::ConstPtr& msg) {
     for (int i = 0; i < 4; i++) {
-        DebugMessage("I heard: joint " + msg->name[i] + " has angle of " + std::to_string(msg->position[i]));
+        double angleRad = msg->position[i];
+        double angleDeg = angleRad * 180 / M_PI;
+        DebugMessage("I heard: joint " + msg->name[i] + " has angle of " + std::to_string(angleDeg));
     }
 }
 
