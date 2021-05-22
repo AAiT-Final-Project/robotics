@@ -33,6 +33,9 @@ target_link_libraries(Subscriber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscp
 add_executable(plugin_test src/plugin_test.cpp)
 target_link_libraries(plugin_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 
+add_executable(pub_test src/pub_test.cpp)
+target_link_libraries(pub_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
