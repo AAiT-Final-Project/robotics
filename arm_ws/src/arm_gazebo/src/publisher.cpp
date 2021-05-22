@@ -87,7 +87,7 @@ namespace gazebo {
         }
         void OnUpdate() {
             for (int i = 0; i < jointsCount; i++) {
-                this->jPos[i] = GetJointPosition(jointList[i]);
+                this->jPos[i] = GetJointPosition(jointList[i], i ? 0 : 2);
             }
         }
     };
