@@ -30,6 +30,7 @@ devel_isolated/
 
 # clion stuff
 .idea/
+../.idea/
 
 # eclipse stuff
 .project
