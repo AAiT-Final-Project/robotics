@@ -50,7 +50,6 @@ class transformer {
 			pub.publish(result);
 			ros::spinOnce();
 
-			std::cout << "Processing Request - x: " << result.x << " y: " <<  result.y << " z: " <<  result.z << std::endl;
 		}
 
 		vector_transformation::Position transform(std::array<std::array<double, 4>, 4> matrix, vector_transformation::Position inputPos) {
