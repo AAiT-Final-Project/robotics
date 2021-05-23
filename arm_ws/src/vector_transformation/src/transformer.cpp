@@ -6,7 +6,6 @@
 #include "vector_transformation/Position.h"
 #include "vector_transformation/Transformation.h"
 
-
 class transformer {
 	public:
 		transformer() {

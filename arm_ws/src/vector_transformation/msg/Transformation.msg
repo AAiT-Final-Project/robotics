@@ -1,3 +1,3 @@
 Position position
 Angles angles
-float64 translation
+Position translations
