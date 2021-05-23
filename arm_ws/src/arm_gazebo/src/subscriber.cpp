@@ -34,23 +34,22 @@ namespace gazebo
         /// \brief A PID controller for the joint.
         common::PID pid;
 
+        /// \brief event connection pointer
+        event::ConnectionPtr updateConnection;
+
+        /// \brief list of angles published
+        double angles[4];
 
         /// \brief Handle incoming message
-        /// \param[in] _msg Repurpose a vector3 message. This function will
+        /// \param[in] _msg Repurpose a Quaternion message. This function will
         /// only use the x component.
         void OnMsg(ConstQuaternionPtr &_msg) {
             DebugMessage("Message received");
-            double angles[4];
-            angles[0] = _msg->y();
-            angles[1] = _msg->z();
-            angles[2] = _msg->w();
-            angles[3] = _msg->x();
 
-            int index = 0;
-            for (auto joint : jointList) {
-                float rad = M_PI * angles[index++] / 180;
-                SetJointAngle(joint->GetScopedName(), rad);
-            }
+            this->angles[0] = _msg->w(); // represents the bottom angle value
+            this->angles[1] = _msg->x();
+            this->angles[2] = _msg->y();
+            this->angles[3] = _msg->z(); // this has value of the top angle
         }
     public:
         JointSubscriberPlugin() {}
@@ -76,7 +75,7 @@ namespace gazebo
             this->jointList = _model->GetJoints();
 
             // Setup a P-controller, with a gain of 0.1.
-            this->pid = common::PID(0.1, 0.01, 0.03);
+            this->pid = common::PID(30.1, 10.01, 10.03);
 
             // Apply the P-controller to the joint.
             for (auto const &joint : jointList) {
@@ -92,13 +91,21 @@ namespace gazebo
             std::string topicName = "~/" + this->model->GetName() + "/angle_cmd";
             // Subscribe to the topic, and register a callback
             this->sub = this->node->Subscribe(topicName, &JointSubscriberPlugin::OnMsg, this);
+            this->updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&JointSubscriberPlugin::OnUpdate, this));
         }
 
         /// \brief Set the angle of joint
         /// \param[in] rad is value of an angle in Radians
-        void SetJointAngle(std::string joint, const double &rad) {
-            // Set the joint's target velocity.
-            jointController->SetPositionTarget(joint, rad);
+        void SetJointAngle() {
+            int index = 0;
+            for (auto joint : jointList) {
+                double rad = M_PI * angles[index++] / 180;
+                // Set the joint's target velocity.
+                jointController->SetPositionTarget(joint->GetScopedName(), rad);
+            }
+        }
+        void OnUpdate() {
+            SetJointAngle();
         }
     };
 
