@@ -1,8 +1,5 @@
 #include "ros/ros.h"
-#include "std_msgs/String.h"
 #include <sstream>
-#include "turtlesim/Pose.h"
-#include "geometry_msgs/Twist.h"
 #include "vector_transformation/Position.h"
 #include "vector_transformation/Transformation.h"
 
@@ -69,8 +66,9 @@ class transformer {
 				for(int j = 0; j < 4; ++j)
 					result[i][j] = (i == j) ? 1 : 0;
 
-			result[axis[0]][axis[0]] = cos(angle), result[axis[1]][axis[1]] = cos(angle);
-			result[axis[0]][axis[1]] = -sin(angle), result[axis[1]][axis[0]] = sin(angle);
+			double rad = M_PI * angle / 180;
+			result[axis[0]][axis[0]] = cos(rad), result[axis[1]][axis[1]] = cos(rad);
+			result[axis[0]][axis[1]] = -sin(rad), result[axis[1]][axis[0]] = sin(rad);
 			result[0][3] = translations[0], result[1][3] = translations[1], result[2][3] = translations[2];
 
 			return result;
