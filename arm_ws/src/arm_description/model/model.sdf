@@ -11,7 +11,9 @@
                     </cylinder>
                 </geometry>
             </collision>
-
+            <inertial>
+                <mass>50</mass>
+            </inertial>
             <visual name='visual'>
                 <geometry>
                     <cylinder>
@@ -19,6 +21,13 @@
                         <length>.1</length>
                     </cylinder>
                 </geometry>
+                <material>
+                    <script>
+                        <uri>model://materials/scripts</uri>
+                        <uri>model://materials/textures</uri>
+                        <name>RedArmMaterial/Diffuse</name>
+                    </script>
+                </material>
             </visual>
         </link>
         <joint name="base_arm1" type="revolute">
@@ -30,9 +39,9 @@
             </axis>
         </joint>
         <link name='arm1'>
-            <gravity>0</gravity>
+            
             <pose>0 0 0.125 0 0 0</pose>
-
+            <gravity>0</gravity>
             <collision name='collision'>
                 <geometry>
                     <cylinder>
@@ -49,6 +58,7 @@
                         <length>.05</length>
                     </cylinder>
                 </geometry>
+
             </visual>
         </link>
         <joint name="arm1_arm2" type="revolute">
@@ -58,11 +68,15 @@
             <axis>
                 <xyz>1 0 0</xyz>
             </axis>
+            <dynamics>
+                <damping>1.0</damping>
+                <friction>10</friction>
+            </dynamics>
         </joint>
         <link name='arm2'>
-            <gravity>0</gravity>
+            
             <pose>0 0 1.15 0 0 0</pose>
-
+            <gravity>0</gravity>
             <collision name='collision'>
                 <geometry>
                     <cylinder>
@@ -79,6 +93,13 @@
                         <length>2</length>
                     </cylinder>
                 </geometry>
+                <material>
+                    <script>
+                        <uri>model://materials/scripts</uri>
+                        <uri>model://materials/textures</uri>
+                        <name>ArmMaterial/Diffuse</name>
+                    </script>
+                </material>
             </visual>
         </link>
         <joint name="arm2_arm3" type="revolute">
@@ -90,9 +111,9 @@
             </axis>
         </joint>
         <link name='arm3'>
-            <gravity>0</gravity>
+            
             <pose>0 0 2.65 0 0 0</pose>
-
+            <gravity>0</gravity>
             <collision name='collision'>
                 <geometry>
                     <cylinder>
@@ -109,6 +130,14 @@
                         <length>1</length>
                     </cylinder>
                 </geometry>
+
+                <material>
+                    <script>
+                        <uri>model://materials/scripts</uri>
+                        <uri>model://materials/textures</uri>
+                        <name>RedArmMaterial/Diffuse</name>
+                    </script>
+                </material>
             </visual>
         </link>
         <joint name="arm3_arm4" type="revolute">
@@ -120,9 +149,9 @@
             </axis>
         </joint>
         <link name='arm4'>
-            <gravity>0</gravity>
+            
             <pose>0 0 3.4 0 0 0</pose>
-
+            <gravity>0</gravity>
             <collision name='collision'>
                 <geometry>
                     <cylinder>
@@ -139,9 +168,20 @@
                         <length>.5</length>
                     </cylinder>
                 </geometry>
+                <material>
+                    <ambient>0.5 0.75 0 1</ambient>
+                    <diffuse>0.7 0.9 0 1</diffuse>
+                    <specular>0.2 0.2 0.2 64</specular>
+                    <emissive>0.1 0 0.1 1</emissive>
+                    <script>
+                        <uri>model://materials/scripts</uri>
+                        <uri>model://materials/textures</uri>
+                        <name>ArmMaterial/Diffuse</name>
+                    </script>
+                </material>
             </visual>
         </link>
         <plugin name="publisher" filename="libPublisher.so"/>
-        <plugin name="subscriber" filename="libSubscriber.so"/>
+        <plugin name="subscriber" filename="libRosSubscriber.so"/>
     </model>
 </sdf>

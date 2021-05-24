@@ -30,6 +30,9 @@ target_link_libraries(Publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp
 add_library(Subscriber SHARED src/subscriber.cpp)
 target_link_libraries(Subscriber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 
+add_library(RosSubscriber SHARED src/ros_subscriber.cpp)
+target_link_libraries(RosSubscriber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
+
 add_executable(plugin_test src/plugin_test.cpp)
 target_link_libraries(plugin_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 
