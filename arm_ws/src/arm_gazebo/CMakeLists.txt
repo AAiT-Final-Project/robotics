@@ -8,39 +8,29 @@ add_compile_options(-std=c++17)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  arm_lib
-  roscpp
-  std_msgs
-  gazebo_ros
-  geometry_msgs
-)
+        arm_lib
+        roscpp
+        rospy
+        std_msgs
+        gazebo_ros
+        geometry_msgs
+        std_msgs
+        )
 
 find_package(gazebo REQUIRED)
 
 link_directories(${GAZEBO_LIBRARY_DIRS})
-include_directories(${Boost_INCLUDE_DIR} 
-              ${catkin_INCLUDE_DIRS} 
-              ${GAZEBO_INCLUDE_DIRS} 
-              ${roscpp_INCLUDE_DIRS}
-              ${std_msgs_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIR}
+        ${catkin_INCLUDE_DIRS}
+        ${GAZEBO_INCLUDE_DIRS}
+        ${roscpp_INCLUDE_DIRS}
+        ${std_msgs_INCLUDE_DIRS})
 
 add_library(Publisher SHARED src/publisher.cpp)
 target_link_libraries(Publisher ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 
-add_library(Subscriber SHARED src/subscriber.cpp)
-target_link_libraries(Subscriber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
-
-add_library(RosSubscriber SHARED src/ros_subscriber.cpp)
+add_library(RosSubscriber SHARED src/subscriber.cpp)
 target_link_libraries(RosSubscriber ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
-
-add_executable(plugin_test src/plugin_test.cpp)
-target_link_libraries(plugin_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
-
-add_executable(pub_test src/pub_test.cpp)
-target_link_libraries(pub_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
-
-add_executable(ros_sub_test src/ros_subscriber_test.cpp)
-target_link_libraries(ros_sub_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -85,8 +75,8 @@ target_link_libraries(ros_sub_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 ## Generate services in the 'srv' folder
 # add_service_files(
 #   FILES
-#   Service1.srv
-#   Service2.srv
+#   FK.srv
+#   IK.srv
 # )
 
 ## Generate actions in the 'action' folder
@@ -133,12 +123,16 @@ target_link_libraries(ros_sub_test ${GAZEBO_LIBRARIES} ${roscpp_LIBRARIES})
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES arm_gazebo
-  CATKIN_DEPENDS arm_lib roscpp rospy std_msgs geometry_msgs
-#  DEPENDS system_lib
-  DEPENDS roscpp gazebo_ros arm_lib
+        #  INCLUDE_DIRS include
+        #  LIBRARIES arm_gazebo
+        CATKIN_DEPENDS arm_lib roscpp rospy std_msgs geometry_msgs
+        #  DEPENDS system_lib
+        DEPENDS roscpp gazebo_ros arm_lib
 )
+
+catkin_install_python(PROGRAMS scripts/fk.py scripts/ik.py
+        DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
 
 ###########
 ## Build ##

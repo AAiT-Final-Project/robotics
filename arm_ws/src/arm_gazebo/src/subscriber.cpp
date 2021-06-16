@@ -1,115 +1,196 @@
+#ifndef _ROS_SUBSCRIBER_PLUGIN_HH_
+#define _ROS_SUBSCRIBER_PLUGIN_HH_
 
-#ifndef JOINT_SUBSCRIBER_PLUGIN_HH_
-#define JOINT_SUBSCRIBER_PLUGIN_HH_
-
-#include <iostream>
+//  Gazebo api
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
-#include <gazebo/transport/transport.hh>
-#include "ros/ros.h"
 
+// ROS
+#include <thread>
+#include "ros/ros.h"
+#include "ros/callback_queue.h"
+#include "ros/subscribe_options.h"
+#include "geometry_msgs/Quaternion.h"
+#include "std_msgs/String.h"
 #include "log.h"
+
+#include "arm_lib/FK.h"
+#include "arm_lib/IK.h"
 
 namespace gazebo
 {
-    /// \brief A plugin to control joints.
-    class JointSubscriberPlugin : public ModelPlugin {
+/// \brief A plugin to control a SUBSCRIBER sensor.
+    class JointRosSubscriberPlugin : public ModelPlugin {
 
     private:
-        /// \brief A node used for transport
-        transport::NodePtr node;
 
-        /// \brief A subscriber to a named topic.
-        transport::SubscriberPtr sub;
-
-        /// \brief Pointer to the model.
+        /// \brief Pointer to the models.
         physics::ModelPtr model;
 
-        /// \brief List of joints.
+        /// \brief List of joints. We have 8 joints the 4 four on robot arm the last four on the grip part
         physics::Joint_V jointList;
 
-        /// \brief joint controller
-        physics::JointControllerPtr jointController;
+        /// \brief List of 8 links;
+        physics::Link_V linkList;
 
         /// \brief A PID controller for the joint.
         common::PID pid;
 
-        /// \brief event connection pointer
-        event::ConnectionPtr updateConnection;
+        /// \brief joint controller
+        physics::JointControllerPtr jointController;
 
-        /// \brief list of angles published
-        double angles[4];
+        /// \brief A node use for ROS transport
+        std::unique_ptr<ros::NodeHandle> rosNode;
 
-        /// \brief Handle incoming message
-        /// \param[in] _msg Repurpose a Quaternion message. This function will
-        /// only use the x component.
-        void OnMsg(ConstQuaternionPtr &_msg) {
-            DebugMessage("Message received");
+        /// \brief A ROS subscriber
+        ros::Subscriber rosSub, gripSub, ikSub;
 
-            this->angles[0] = _msg->w(); // represents the bottom angle value
-            this->angles[1] = _msg->x();
-            this->angles[2] = _msg->y();
-            this->angles[3] = _msg->z(); // this has value of the top angle
+        /// \brief A ROS callbackqueue that helps process messages
+        ros::CallbackQueue rosQueue, gripQueue, ikQueue;
+
+        /// \brief A thread the keeps running the rosQueue
+        std::thread rosQueueThread;
+
+        /// \brief ROS helper function that processes messages
+        void QueueThread() {
+            static const double timeout = 0.01;
+            while (this->rosNode->ok()) {
+                this->rosQueue.callAvailable(ros::WallDuration(timeout));
+                this->gripQueue.callAvailable(ros::WallDuration(timeout));
+//                this->calculateFK();
+            }
+        }
+
+        void calculateFK() {
+            ros::NodeHandle n;
+            ros::ServiceClient client = n.serviceClient<arm_lib::FK>("fk");
+            arm_lib::FK srv;
+            srv.request.link_length = {0.05, 2, 1, 0.5, 0.04, 0.2};
+            srv.request.joint_position = {0, 0, 0, 0, 0, 0};
+            srv.request.joint_axis = {2, 0, 0, 0, 2, 0}; // all joint except the last one (index == 5) are
+            for (int i = 0; i < 6; i++) {
+                srv.request.joint_position[i] = GetJointPosition(jointList[i], srv.request.joint_axis[i]);
+            }
+
+            if (client.call(srv)) {
+                auto pose = srv.response.actuator_pose;
+                std::cout << pose[0] << " " << pose[1] << " "  << pose[2] << std::endl;
+            }
+            else
+                std::cout << "error" << std::endl;
+        }
+
+        void calculateIK(double x, double y, double z) {
+            // service client
+            ros::NodeHandle n;
+            ros::ServiceClient client = n.serviceClient<arm_lib::IK>("ik");
+            arm_lib::IK srv;
+            srv.request.end_effector = {x, y, z};
+
+            if (client.call(srv)) {
+                for (int i = 0; i < 6; i++) {
+                    jointController->SetPositionTarget(jointList[i]->GetScopedName(), srv.response.new_angles[i]);
+                }
+            }
+            else {
+                std::cout << "error" << std::endl;
+            }
         }
     public:
-        JointSubscriberPlugin() {}
-        /// \brief The load function is called by Gazebo when the plugin is
-        /// inserted into simulation
-        /// \param[in] _model A pointer to the model that this plugin is
-        /// attached to.
-        /// \param[in] _sdf A pointer to the plugin's SDF element.
-        virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-            // Safety check
-            printf("subscriber started\n");
+        /// \brief Constructor
+        JointRosSubscriberPlugin(){ }
 
+        virtual void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
+            printf("Joint ros subscriber \n");
+            // Safety check
             if (_model->GetJointCount() == 0) {
-                std::cerr << "Invalid joint count, Arm_gazebo plugin not loaded\n";
+                std::cerr << "Invalid joint count, SUBSCRIBER plugin not loaded\n";
                 return;
             }
 
-            // Store the model pointer for convenience.
+            // Store the models pointer for convenience.
             this->model = _model;
-            this->jointController = this->model->GetJointController();
-            // Get the first joint. We are making an assumption about the model
-            // having one joint that is the rotational joint.
+
+            // Get list of joints
             this->jointList = _model->GetJoints();
 
-            // Setup a P-controller, with a gain of 0.1.
-            this->pid = common::PID(30.1, 10.01, 10.03);
+            // Get list of links
+            this->linkList = _model->GetLinks();
 
-            // Apply the P-controller to the joint.
+            // Setup a PID  .
+            this->pid = common::PID(200, 65, 35);
+
+            this->jointController = this->model->GetJointController();
+
+            // Apply the PID to the joints.
             for (auto const &joint : jointList) {
                 jointController->SetPositionPID(joint->GetScopedName(), this->pid);
             }
 
-            // Create the node
-            this->node = transport::NodePtr(new transport::Node());
+            auto pid2 = common::PID(18.2, 10, 10);
+            jointController->SetPositionPID(jointList[6]->GetScopedName(), pid2);
+            jointController->SetPositionPID(jointList[7]->GetScopedName(), pid2);
 
-            this->node->Init(this->model->GetWorld()->Name());
+            jointController->SetPositionTarget(jointList[6]->GetScopedName(), -0.5 * M_PI);
+            jointController->SetPositionTarget(jointList[7]->GetScopedName(), 0.5 * M_PI);
 
-            // Create a topic name
-            std::string topicName = "~/" + this->model->GetName() + "/angle_cmd";
-            // Subscribe to the topic, and register a callback
-            this->sub = this->node->Subscribe(topicName, &JointSubscriberPlugin::OnMsg, this);
-            this->updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&JointSubscriberPlugin::OnUpdate, this));
-        }
-
-        /// \brief Set the angle of joint
-        /// \param[in] rad is value of an angle in Radians
-        void SetJointAngle() {
-            int index = 0;
-            for (auto joint : jointList) {
-                double rad = M_PI * angles[index++] / 180;
-                // Set the joint's target velocity.
-                jointController->SetPositionTarget(joint->GetScopedName(), rad);
+            // Initialize ros, if it has not already bee initialized.
+            if (!ros::isInitialized()) {
+                int argc = 0;
+                char** argv = NULL;
+                ros::init(argc, argv, "gazebo_client",
+                          ros::init_options::NoSigintHandler);
             }
+
+            // Create our ROS node. This acts in a similar manner to
+            // the Gazebo node
+            this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
+
+            // Create a named topic, and subscribe to it.
+            ros::SubscribeOptions so =
+                    ros::SubscribeOptions::create<geometry_msgs::Quaternion>(
+                            "/arm/angle_cmd",
+                            1,
+                            boost::bind(&JointRosSubscriberPlugin::OnPosMsg, this, _1),
+                            ros::VoidPtr(), &this->rosQueue);
+
+            this->rosSub = this->rosNode->subscribe(so);
+
+            // Create a grip topic, and subscribe to it.
+            so = ros::SubscribeOptions::create<std_msgs::String>(
+                    "/arm/grip_cmd",
+                    1,
+                    boost::bind(&JointRosSubscriberPlugin::OnGripMsg, this, _1),
+                    ros::VoidPtr(), &this->gripQueue);
+
+            this->gripSub = this->rosNode->subscribe(so);
+
+            // Spin up the queue helper thread.
+            this->rosQueueThread =
+                    std::thread(std::bind(&JointRosSubscriberPlugin::QueueThread, this));
+
+            calculateIK(2, 2, 0.2);
         }
-        void OnUpdate() {
-            SetJointAngle();
+
+        double GetJointPosition(const physics::JointPtr joint, const double axis_index = 0) {
+            return joint->Position(axis_index);
+        }
+
+        void OnPosMsg(const geometry_msgs::QuaternionConstPtr &_msg) {
+            calculateIK(_msg->x, _msg->y, _msg->z);
+        }
+
+        void OnGripMsg(const std_msgs::StringConstPtr &_msg) {
+            std::stringstream ss(_msg->data.c_str());
+            std::string s = ss.str();
+
+            double angle = (s.find("grip") != std::string::npos) ? 0.41 : 0.0;
+
+            jointController->SetPositionTarget(jointList[6]->GetScopedName(), +angle);
+            jointController->SetPositionTarget(jointList[7]->GetScopedName(), -angle);
         }
     };
 
-    // Tell Gazebo about this plugin, so that Gazebo can call Load on this plugin.
-    GZ_REGISTER_MODEL_PLUGIN(JointSubscriberPlugin)
+    GZ_REGISTER_MODEL_PLUGIN(JointRosSubscriberPlugin)
 }
 #endif
