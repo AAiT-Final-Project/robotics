@@ -49,7 +49,7 @@
         <link name='arm1'>
             <pose>0 0 0.125 0 0 0</pose>
             <inertial>
-                <mass>.05</mass>
+                <mass>.01</mass>
             </inertial>
             <collision name='collision'>
                 <geometry>
@@ -299,6 +299,10 @@
             <child>left_finger</child>
             <axis>
                 <xyz>1 0 0</xyz>
+                <limit>
+                    <effort>100</effort>
+                    <velocity>1.0</velocity>
+                </limit>
             </axis>
         </joint>
         <link name="left_finger">
@@ -342,6 +346,10 @@
             <parent>palm</parent>
             <axis>
                 <xyz>1 0 0</xyz>
+                <limit>
+                    <effort>100</effort>
+                    <velocity>1.0</velocity>
+                </limit>
             </axis>
         </joint>
         <link name="right_finger">
