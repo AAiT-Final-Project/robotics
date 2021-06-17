@@ -169,7 +169,7 @@ namespace gazebo
             this->rosQueueThread =
                     std::thread(std::bind(&JointRosSubscriberPlugin::QueueThread, this));
 
-            calculateIK(2, 2, 0.2);
+            calculateIK(2, 2, 0.25);
         }
 
         double GetJointPosition(const physics::JointPtr joint, const double axis_index = 0) {

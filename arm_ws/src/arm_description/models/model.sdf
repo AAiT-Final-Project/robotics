@@ -75,15 +75,15 @@
             <pose>0 0 -1 0 0 0</pose>
             <axis>
                 <xyz>1 0 0</xyz>
+                <limit>
+                    <effort>100</effort>
+                    <velocity>1.0</velocity>
+                </limit>
+                <dynamics>
+                    <damping>1.0</damping>
+                    <friction>0.5</friction>
+                </dynamics>
             </axis>
-            <dynamics>
-                <damping>1.0</damping>
-                <friction>0.5</friction>
-            </dynamics>
-            <limit>
-                <effort>100</effort>
-                <velocity>1.0</velocity>
-            </limit>
         </joint>
         <link name='arm2'>
             <pose>0 0 1.15 0 0 0</pose>
@@ -168,15 +168,15 @@
             <pose>0 0 -0.25 0 0 0</pose>
             <axis>
                 <xyz>1 0 0</xyz>
+                <dynamics>
+                    <damping>1.0</damping>
+                    <friction>0.5</friction>
+                </dynamics>
+                <limit>
+                    <effort>100</effort>
+                    <velocity>1.0</velocity>
+                </limit>
             </axis>
-            <dynamics>
-                <damping>1.0</damping>
-                <friction>0.5</friction>
-            </dynamics>
-            <limit>
-                <effort>100</effort>
-                <velocity>1.0</velocity>
-            </limit>
         </joint>
         <link name='arm4'>
             <pose>0 0 3.4 0 0 0</pose>
@@ -300,8 +300,8 @@
             <axis>
                 <xyz>1 0 0</xyz>
                 <limit>
-                    <effort>100</effort>
-                    <velocity>1.0</velocity>
+                    <effort>200</effort>
+                    <velocity>2</velocity>
                 </limit>
             </axis>
         </joint>
@@ -347,8 +347,8 @@
             <axis>
                 <xyz>1 0 0</xyz>
                 <limit>
-                    <effort>100</effort>
-                    <velocity>1.0</velocity>
+                    <effort>200</effort>
+                    <velocity>2</velocity>
                 </limit>
             </axis>
         </joint>
